@@ -1,2 +1,2 @@
 # AnsibleCreatingUserWithAZKeyVaultIntegration
-## code are seprated in different branch
+## code are separated in different branch
