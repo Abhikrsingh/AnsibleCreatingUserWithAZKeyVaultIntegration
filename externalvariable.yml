@@ -1,0 +1,11 @@
+---
+
+users:
+  - username: ayush
+    groups: "developers"
+  - username: aman
+    groups: "developers"
+#cre:
+#  servicePrincipalId: xxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#  servicePrincipalPassword: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#  tenantId: xxxxxxxxxxxxxxxxxxxxxxxxxxxx

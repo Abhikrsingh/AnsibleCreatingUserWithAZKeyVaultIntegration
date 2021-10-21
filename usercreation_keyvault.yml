@@ -1,0 +1,71 @@
+---
+- hosts: localhost
+  connection: local
+  vars_files:
+    - externalvariable.yml    
+  tasks:
+    #- name: connect to azure key vault
+    #  shell: |
+    #    az login --service-principal -u "{{ cre.servicePrincipalId }}" -p "{{ cre.servicePrincipalPassword }}" --tenant "{{ cre.tenantId }}"
+    #  args:
+    #    executable: /usr/bin/bash
+    - name: Run a az cli command to download user keys from key vault
+      #shell: az keyvault secret show --name "{{ item.username }}" --vault-name keyStoreTesting --query value -o tsv
+      shell: az keyvault secret download --vault-name keyStoreTesting --name {{ item.username }}PubKey --file {{ item.username }}.pub
+      with_items: "{{ users }}"
+      args:
+        executable: /usr/bin/bash
+      with_items: "{{ users }}"
+
+- name: this section is for creating user
+  hosts: user
+  gather_facts: False
+  remote_user: abhisheks
+  become: True
+  vars_files:
+    - externalvariable.yml
+  tasks:
+  - name: creating multiple user at once
+    user:
+      name: "{{ item.username }}"
+      shell: /bin/bash
+      state: present
+      groups: "{{ item.groups }}"
+      append: yes
+    with_items: "{{ users }}"
+    tags:
+      - make-user
+ 
+  - name: delete multiple user at once
+    user:
+      name: "{{ item.username }}"
+      state: absent
+      remove: yes
+      force: yes
+    with_items: "{{ users }}"
+    tags:
+      - delete-user
+
+  - name: Deploy SSH Key
+    authorized_key: user={{ item.username }}
+                    key="{{ lookup('file', '{{ item.username }}.pub') }}"
+                    state=present
+    with_items: "{{ users }}"
+    tags:
+      - ssh-key
+
+#- name: deleting user keys after making user
+-
+  hosts: localhost
+  connection: local
+  vars_files:
+    - externalvariable.yml
+  tasks:
+  - name:  deleting user keys from localhost server
+    file:
+      path: "{{ item.username }}.pub"
+      state: absent
+    with_items: "{{ users }}"
+    tags:
+      - delete-pub
+ 
