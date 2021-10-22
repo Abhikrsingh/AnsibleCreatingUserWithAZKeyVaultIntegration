@@ -1,0 +1,53 @@
+---
+- name: this section is for creating user using ansible 
+  hosts: user
+  gather_facts: False
+  remote_user: abhisheks
+  become: True
+  vars:
+    users:
+      - username: ayush
+        use_sudo: No
+        group: "developers"
+      - username: aman
+        use_sudo: Yes
+        group: "developers"
+  tasks:
+  - name: creating multiple user at once
+    user:
+      name: "{{ item.username }}"
+      shell: /bin/bash
+      groups: "{{ item.group }}" 
+      when: 
+    with_items: "{{ users }}"
+    tags:
+      - make-user
+
+  - name: delete multiple user at once
+    user:
+      name: "{{ item.username }}"
+      state: absent
+      remove: yes
+      force: yes
+    with_items: "{{ users }}"
+    tags:
+      - delete-user
+
+  - name: Deploy SSH Key
+    authorized_key: user={{ item.username }}
+                    key="{{ lookup('file', 'pub_keys/{{ item.username }}.pub') }}"
+                    state=present
+    with_items: "{{ users }}"
+  
+  - name: giving sudo to sepcified user
+    lineinfile: "dest=/etc/sudoers
+      insertafter=EOF
+      line='{{ item.username }} ALL=(ALL) NOPASSWD: ALL'
+      regexp='^{{ item.username }} .*'
+      state=present"
+    when: '{{ item.use_sudo }} == True'
+    with_items: "{{ users }}"
+    tags:
+      - permit-sudo
+...
+
