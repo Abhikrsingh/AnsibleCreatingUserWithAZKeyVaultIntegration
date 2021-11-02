@@ -1,0 +1,52 @@
+---
+- name: this section is for creating user
+  hosts: user
+  gather_facts: False
+  remote_user: abhisheks
+  become: True
+  vars:
+    - username: ayush
+      groups: wheel
+    - username: aman
+      groups: wheel
+  tasks:
+  - name: creating multiple user at once
+    user:
+      name: "{{ item.username }}"
+      shell: /bin/bash
+      state: present
+      groups: "{{ item.groups }}"
+      append: yes
+    with_items: "{{ users }}"
+    tags:
+      - make-user
+
+  - name: delete multiple user at once
+    user:
+      name: "{{ item.username }}"
+      state: absent
+      remove: yes
+      force: yes
+    with_items: "{{ users }}"
+    tags:
+      - delete-user
+
+  - name: Deploy SSH Key
+    authorized_key: user={{ item.username }}
+                    key="{{ lookup('file', 'userPubKeys/{{ item.username }}.pub') }}"
+                    state=present
+    with_items: "{{ users }}"
+    tags:
+      - ssh-key
+
+-
+  hosts: localhost
+  connection: local
+  tasks:
+  - name:  deleting user keys from localhost server
+    file:# working
+      path: "userPubKeys/{{ item.username }}.pub"
+      state: absent
+    with_items: "{{ users }}"
+    tags:
+      - delete-pub
