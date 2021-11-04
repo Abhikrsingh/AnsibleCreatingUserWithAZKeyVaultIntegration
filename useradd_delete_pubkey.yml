@@ -44,7 +44,7 @@
   connection: local
   tasks:
   - name:  deleting user keys from localhost server
-    file:# working
+    file:
       path: "userPubKeys/{{ item.username }}.pub"
       state: absent
     with_items: "{{ users }}"
