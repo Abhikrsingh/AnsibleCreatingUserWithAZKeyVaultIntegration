@@ -1,0 +1,50 @@
+---
+- name: This section is for define user and group
+  hosts: all
+  gather_facts: False
+  remote_user: abhisheks
+  become: True
+  vars_prompt:
+      - name: username
+        prompt: Please provide username which you want to make on remote user [remenber user name given and public key should have same name with appending word .pub like ankit.pub]
+        private: no
+      - name: group
+        prompt: Please provide group name in which you want to add this user
+        private: no
+  tasks:
+  - name: creating user
+    user:
+      name: "{{ username }}"
+      shell: /bin/bash
+      state: present
+      groups: "{{ group }}"
+      append: yes
+    tags:
+      - make-user
+
+  - name: deleting user
+    user:
+      name: "{{ username }}"
+      state: absent
+      remove: yes
+      force: yes
+    tags:
+      - delete-user
+
+  - name: Deploy SSH Key
+    authorized_key: user={{ username }}
+                    key="{{ lookup('file', 'userPubKeys/{{ username }}.pub') }}"
+                    state=present
+    tags:
+      - ssh-key
+-
+  hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+  - name:  deleting user keys from localhost server
+    shell: "rm userPubKeys/*"
+    args:
+      warn: false
+    tags:
+      - delete-pub
